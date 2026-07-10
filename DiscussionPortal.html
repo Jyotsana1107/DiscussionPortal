@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Discussion Portal</title>
+    </head>
+
+    <body style = "display: flex; flex-direction:column; flex:1;">
+        
+        <!--header-->
+        <div style="background-color: rgb(4, 70, 124); color: white; padding: 10px 10px 10px 40px; font-size: 38px;">
+            <b>Discussion Portal</b>
+        </div>
+
+        <!--body-->
+        <div style = "display: grid; grid-template-columns: 40% 60%;">
+            
+            <!--Questions List-->
+            <div style="padding: 20px 10px 20px 10px;">
+                <div>
+                    <button id = "newQuestionBtn" style = "background-color:blue; color: white; margin-right: 15px;">New Question Form</button>
+                    <input id="search" type="text" placeholder="Search Question....">
+                </div>
+                <div id = "questionList" style = "display: flex; flex-direction: column;">
+                </div>
+            </div>
+
+            <!--Right Pane-->
+            <div>
+
+                <!--Question-->
+                <div id = "createQuestion">
+                    <p style="font-size: 36px; margin-bottom: 10px;"><b>Welcome to Discussion Portal !</b></p>
+                    <p style="font-size: 20px;">Enter a Subject and Question to get started</p>
+                    <form id = "newQuestion" style="display:flex; flex-direction:column; width:80%;">
+                        <input id="subject" placeholder="Subject" style="font-size:18px;" required><br>
+                        <textarea id="questionBrief" placeholder="Question" style = "height:30vh; font-size:16px;" required></textarea><br>
+                        <button type="submit" id = "submit" style="align-self: flex-end; background-color:blue; color: white; font-size: 16px; padding:5px">Submit</button>
+                    </form>
+                </div>
+
+
+
+                <!--Response-->
+                <div id = "responses" style = "display: flex; flex-direction: column; flex: 2">
+                    <div id = "responseQuestion">
+                        <h2>Question</h2>
+                        <h4 id = "title"> whole question from left pane gets pasted here</h4>
+                        <p id = "clickedQuestion"></p>
+                        <button id = "resolve" style="align-self: flex-end; background-color:blue; color: white; font-size: 16px; padding:5px">Resolve</button>
+                    </div>
+                    <div>
+                        <h2>Responses:</h2>
+                        <div id = "responseList"></div>
+                    </div>
+                    <div id="newResponse">
+                        <h2>Add Response</h2>
+                        <form id="reset">
+                            <input id="name" placeholder="Enter Name" style="font-size:18px;" required><br>
+                            <textarea id="comment" placeholder="Enter Comment" style = "height:30vh; font-size:16px; width: 40%;" required></textarea>
+                            <button id = "submitResponse" style="align-self: flex-end; background-color:blue; color: white; font-size: 16px; padding:5px">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+
+
+
+    <!--JavaScript functionality-->
+        <script>
+            //declaring or getting variables and id's
+            var create = document.getElementById("createQuestion");
+            var responses = document.getElementById("responses");
+            var form = document.getElementById("newQuestion");
+            let questions= [];
+            var questionId = 0;
+            let responseId = 0;
+            let selectedQuestion = null;
+            
+
+
+            responses.style.display = "none";
+            form.addEventListener("submit", function(e){
+                e.preventDefault();
+
+                questionId++;
+
+                var subject = document.getElementById("subject").value;
+                var questionBrief = document.getElementById("questionBrief").value;
+
+                let question = {
+                    id: questionId,
+                    subject,
+                    questionBrief,
+                    votes: 0,
+                    favorite: false,
+                    responses: []
+                };
+                questions.push(question)
+
+                
+
+                var questionList = document.getElementById("questionList");
+                questionList.innerHTML = "";
+                
+
+                questions.forEach(function(question){
+                    var questionDiv = document.createElement("div");
+                    questionDiv.style.border = "1px solid gray";
+                    questionDiv.style.margin = "10px 0";
+                    questionDiv.style.padding = "5px 10px 5px 10px";
+
+                    var questionSubject = document.createElement("h3");
+                    var questionText = document.createElement("p");
+                    questionSubject.textContent = question.subject;
+                    questionText.textContent = question.questionBrief; 
+                    questionDiv.append(questionSubject);
+                    questionDiv.append(questionText);
+
+                    questionDiv.addEventListener("click", function(){
+                        display(question);
+                    });
+
+                    var div = document.createElement("div");
+                    div.style.display= "flex";
+                    div.style.flexDirection = "row";
+                    var votes = document.createElement("p");
+                    var upvote = document.createElement("button");
+                    var downvote = document.createElement("button");
+                    votes.textContent = "Votes - " + question.votes;
+                    upvote.textContent = ">";
+                    downvote.textContent = "<";
+
+
+                    upvote.addEventListener("click", function(e){
+                        e.stopPropagation();
+                        question.votes++;
+                        questions.sort(function(a, b){
+                            return b.votes - a.votes;
+                        });
+                        votes.textContent = "Votes : " + question.votes;
+                    });
+
+                    downvote.addEventListener("click", function(e){
+                        e.stopPropagation();
+                        question.votes--;
+                        questions.sort(function(a, b){
+                            return b.votes - a.votes;
+                        });
+                        votes.textContent = "Votes : " + question.votes;
+                    });
+                    div.append(downvote);
+                    div.append(votes);
+                    div.append(upvote);
+                    questionDiv.append(div);
+
+
+                    var favBtn = document.createElement("button");
+                    favBtn.style.marginTop = "20px";
+                    favBtn.style.width = "30px";
+                    favBtn.style.height = "25px";
+                    favBtn.textContent = question.favorite ? "⭐" : "☆";
+                    favBtn.addEventListener("click", function(e){
+                        e.stopPropagation();
+                        question.favorite = !question.favorite;
+                        favBtn.textContent = question.favorite ? "⭐" : "☆";
+                        questions.sort(function(a,b){
+                            if(a.favorite !== b.favorite){
+                                return b.favorite - a.favorite;
+                            }
+                            return b.votes - a.votes;
+                        });
+                    });
+                    
+                    questionDiv.append(favBtn);
+
+                    
+                    questionList.append(questionDiv);
+                    
+                });
+                
+                
+                form.reset();
+
+            });
+
+
+            
+            //RESPONSES
+            function display(question){
+                selectedQuestion = question;
+                create.style.display = "none";
+                responses.style.display= "block";
+
+                //Question display
+
+                var title = document.getElementById("title");
+                var clickedQuestion = document.getElementById("clickedQuestion");
+                title.textContent = selectedQuestion.subject;
+                clickedQuestion.textContent = selectedQuestion.questionBrief;
+                var responseList = document.getElementById("responseList");
+                responseList.innerHTML = "";
+                
+                selectedQuestion.responses.forEach(function(response){
+                    var responseDiv = document.createElement("div");
+                    var responseName = document.createElement("h3");
+                    var responseComment = document.createElement("p");
+
+                    responseComment.style.fontSize="16px";
+
+                    responseName.textContent = response.name;
+                    responseComment.textContent = response.comment;
+
+                    responseDiv.append(responseName);
+                    responseDiv.append(responseComment);
+
+                    var div = document.createElement("div");
+                    div.style.display= "flex";
+                    div.style.flexDirection = "row";
+                    var votes = document.createElement("p");
+                    var upvote = document.createElement("button");
+                    var downvote = document.createElement("button");
+                    votes.textContent = "Votes - " + response.votes;
+                    upvote.textContent = ">";
+                    downvote.textContent = "<";
+
+
+                    upvote.addEventListener("click", function(e){
+                        e.stopPropagation();
+                        response.votes++;
+                        selectedQuestion.responses.sort(function(a, b){
+                            return b.votes - a.votes;
+                        });
+                        votes.textContent = "Votes : " + response.votes;
+                    });
+
+                    downvote.addEventListener("click", function(e){
+                        e.stopPropagation();
+                        response.votes--;
+                        selectedQuestion.responses.sort(function(a, b){
+                            return b.votes - a.votes;
+                        });
+                        votes.textContent = "Votes : " + response.votes;
+                    });
+
+
+
+                    div.append(downvote);
+                    div.append(votes);
+                    div.append(upvote);
+                    responseDiv.append(div);
+
+
+                    responseList.append(responseDiv);
+                });
+                
+            }
+
+
+            //submit response
+            var submitResponse = document.getElementById("submitResponse");
+            submitResponse.addEventListener("click", function(e){
+
+                e.preventDefault();
+
+                responseId++;
+
+                var name = document.getElementById("name").value;
+                var comment = document.getElementById("comment").value;
+
+                let response = {
+                    id: responseId,
+                    name,
+                    comment,
+                    votes: 0,
+                    favorite: false
+                };
+                selectedQuestion.responses.push(response);
+                
+                
+                var responseList = document.getElementById("responseList");
+                responseList.innerHTML = "";
+                selectedQuestion.responses.forEach(function(response){
+                    var responseDiv = document.createElement("div");
+                    var responseName = document.createElement("h3");
+                    var responseComment = document.createElement("p");
+                    responseComment.style.fontSize="16px";
+
+                    responseName.textContent = response.name;
+                    responseComment.textContent = response.comment;
+
+                    responseDiv.append(responseName);
+                    responseDiv.append(responseComment);
+
+                    var div = document.createElement("div");
+                    div.style.display= "flex";
+                    div.style.flexDirection = "row";
+                    var votes = document.createElement("p");
+                    var upvote = document.createElement("button");
+                    var downvote = document.createElement("button");
+                    votes.textContent = "Votes - " + response.votes;
+                    upvote.textContent = ">";
+                    downvote.textContent = "<";
+
+
+                    upvote.addEventListener("click", function(e){
+                        e.stopPropagation();
+                        response.votes++;
+                        selectedQuestion.responses.sort(function(a, b){
+                            return b.votes - a.votes;
+                        });
+                        votes.textContent = "Votes : " + response.votes;
+                    });
+
+                    downvote.addEventListener("click", function(e){
+                        e.stopPropagation();
+                        response.votes--;
+                        selectedQuestion.responses.sort(function(a, b){
+                            return b.votes - a.votes;
+                        });
+                        votes.textContent = "Votes : " + response.votes;
+                    });
+
+
+
+                    div.append(downvote);
+                    div.append(votes);
+                    div.append(upvote);
+                    responseDiv.append(div);
+
+                    responseList.append(responseDiv);
+
+                });
+                
+            });
+
+
+
+
+
+            //resolve button
+            var resolve = document.getElementById("resolve");
+            resolve.addEventListener("click", function(){
+                if(selectedQuestion == null){
+                    return;
+                }
+                questions = questions.filter(function(question){
+                    return question.id !== selectedQuestion.id;
+                });
+
+                var questionList = document.getElementById("questionList");
+                questionList.innerHTML = "";
+
+                questions.forEach(function(question){
+                    var questionDiv = document.createElement("div");
+                    questionDiv.style.border = "1px solid gray";
+                    questionDiv.style.margin = "10px 0";
+                    questionDiv.style.padding = "5px 10px";
+
+                    var questionSubject = document.createElement("h3");
+                    var questionText = document.createElement("p");
+                    questionSubject.textContent = question.subject;
+                    questionText.textContent = question.questionBrief;
+
+                    questionDiv.append(questionSubject);
+                    questionDiv.append(questionText);
+
+                    questionDiv.addEventListener("click", function(){
+                        display(question);
+                    });
+                    questionList.append(questionDiv);
+                });
+
+                // Clear pane
+                document.getElementById("responseList").innerHTML = "";
+                document.getElementById("title").textContent = "";
+                document.getElementById("clickedQuestion").textContent = "";
+
+                responses.style.display = "none";
+                create.style.display = "block";
+                selectedQuestion = null;
+            });
+            
+
+
+            // to get new Question form
+            var newQuestionBtn = document.getElementById("newQuestionBtn");
+            newQuestionBtn.addEventListener("click", function(){
+                responses.style.display = "none";
+                create.style.display = "block";
+            })
+
+
+            //to search
+            var search = document.getElementById("search");
+            search.addEventListener("input", function(){
+                var key = search.value.toLowerCase();
+                var questionList = document.getElementById("questionList");
+                
+                
+                questionList.innerHTML = "";
+                questions.forEach(function(question){
+                    
+                    if (question.subject.toLowerCase().includes(key) || question.questionBrief.toLowerCase().includes(key)){
+                        var questionElement = document.createElement("div");
+                        
+                        questionElement.addEventListener("click", function(){
+                            display(question);
+                        });
+                        
+                        var eleSub = document.createElement("h3");
+                        var eleBrief = document.createElement("p");
+                        
+                        eleSub.innerHTML = question.subject.toLowerCase().replace(key, '<span style="background-color: #8484df;">' + key + '</span>');
+                        eleBrief.innerHTML = question.questionBrief.toLowerCase().replace(key, '<span style="background-color: #8484df;">' + key + '</span>');
+                        
+                        questionElement.append(eleSub);
+                        questionElement.append(eleBrief);
+                        
+                        questionList.append(questionElement);
+                    }
+                })
+
+
+                if (questionList.innerHTML == ""){
+                        questionList.textContent = "Not Found";
+                }
+
+            })
+
+        </script>
+    </body>
+</html>
